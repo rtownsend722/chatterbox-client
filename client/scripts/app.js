@@ -9,11 +9,13 @@ app.init = function() {
   $('#send').find('.submit').on('click', (event) => { 
     this.handleSubmit(); 
   });
-  $('.roombutton').on('click', (event) => { this.handleRoomNameClick(event); });
-
+  
   let arrowFunction = (data) => { this.postMessages(data); };
 
   this.fetch(arrowFunction);
+
+
+  console.log('App.init has called!');
 };
 
 app.send = function(message) { 
@@ -29,12 +31,15 @@ app.send = function(message) {
 
 
 
-app.fetch = function(cb) {
+app.fetch = function(cb, data) {
   $.ajax({
     url: this.URL,
     type: 'GET',
+    data: {limit: 9999999},
     success: function (data) {
       cb(data);
+      this.feed = data.results;
+      console.log(this.feed);
     },
     error: function() { console.log('error'); }
   });
@@ -64,6 +69,12 @@ app.renderMessage = function(message) {
   $('#chats').prepend($message);
 };
 
+app.renderMessages = function() {
+  for (let i = 0; i < this.feed.length; i++) {
+    this.renderMessage(this.feed[i]);
+  }
+};
+
 app.renderRoom = function(room) {
   $('#roomSelect').append('<div>`${room}`</div>');
 };
@@ -73,18 +84,9 @@ app.handleUsernameClick = function() {
 };
 
 app.handleSubmit = function() {
-
-  console.log('TEST');
-
   var content = $('#send').find('#message').val();
-
   let data = {username: 'DanAndRebecca', text: content, roomname: 'awesome room'};
-
   this.send(data);
-
-  // also update our own component
-  // get data from form
-
   this.renderMessage(data);
 };
 
@@ -104,10 +106,14 @@ app.postMessages = function(data) {
     }
 
     // if (roomName === this.room) {
-    if (true) {
+    if (!this.showAll) {
+      if (roomName === this.room) {
+        this.renderMessage(thisMessage);
+      } else {
+        continue;
+      }
+    } else {
       this.renderMessage(thisMessage);
-    } {
-      continue;
     }
 
   }
@@ -115,28 +121,51 @@ app.postMessages = function(data) {
   // populate the aside
   for (let i = 0; i < this.availableRooms.length; i++) {
 
-    if (this.availableRooms[i].length < 1) {
+    // if the (safe) room name has no length, then skip it
+    if (this.availableRooms[i] && this.availableRooms[i].length < 1) {
       continue;
     }
 
     // make a new roomName node
     $room = $(`<div><button class="${this.availableRooms[i]} roombutton">${this.availableRooms[i]}</button></div>`);
+
+    $($room).on('click', (event) => { this.handleRoomNameClick(event); });
+
     // append the node to the aside
     $('#roomlist').append($room);
   }
 
+
 };
 
 app.handleRoomNameClick = function(event) {
-  console.log("asdf");
-
   //identify room name by roomname.text()
-  console.log(event);
+  const selectedRoom = event.toElement.innerHTML;
+
+  console.log('handleRoomNameClick invoked', selectedRoom);
+
+  if (selectedRoom === 'All Rooms') {
+    this.showAll = true;
+    console.log('showing all rooms...');
+    this.renderMessages();
+    return;
+  }
+
+  // set up the filter
+  this.showAll = false;
+  this.room = selectedRoom;
+
+  console.log(this.showAll, this.room);
+
+  // re-render the messages
+  this.renderMessages();
 
 };
 
 app.room = 'awesome room';
+app.showAll = true;
 app.availableRooms = ['All Rooms'];
+app.feed = [];
 
 $(document).ready(function() {
   app.init();
