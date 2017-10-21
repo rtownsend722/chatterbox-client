@@ -6,13 +6,14 @@ app.URL = 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages';
 
 app.init = function() {
   $('#main').find('.username').on('click', this.handleUsernameClick);
-  // $('#send').find('.submit').unbind('submit').bind('submit', () => { this.handleSubmit(); } );
   $('#send').find('.submit').on('click', (event) => { 
     this.handleSubmit(); 
-    // event.preventDefault();
   });
+  $('.roombutton').on('click', (event) => { this.handleRoomNameClick(event); });
 
-  this.fetch(this.postMessages);
+  let arrowFunction = (data) => { this.postMessages(data); };
+
+  this.fetch(arrowFunction);
 };
 
 app.send = function(message) { 
@@ -20,14 +21,18 @@ app.send = function(message) {
     url: this.URL,
     type: 'POST',
     data: JSON.stringify(message),
+    contentType: 'application/json',
+    success: function() { console.log(message); },
+    error: function() { console.log('Error.'); }
   }); 
 };
+
+
 
 app.fetch = function(cb) {
   $.ajax({
     url: this.URL,
     type: 'GET',
-    crossDomain: true,
     success: function (data) {
       cb(data);
     },
@@ -42,8 +47,21 @@ app.clearMessages = function() {
 };
 
 app.renderMessage = function(message) {
-  $('#chats').append(`<div class="chat"><span class="username">${message.username}</span><span>${message.text}</span><span class="roomname">${message.roomname}</span></div>`);
+  var $message = $(`<div class="chat"></div>`);
+  
+  var $username = $(`<span class="username"></span>`);
+  var $text = $(`<span class="text"></span>`);
+  var $roomname = $(`<span class="roomname"></span>`);
 
+  $username.text(message.username);
+  $text.text(message.text);
+  $roomname.text(message.roomname);
+
+  $message.append($username);
+  $message.append($text);
+  $message.append($roomname);
+
+  $('#chats').prepend($message);
 };
 
 app.renderRoom = function(room) {
@@ -58,25 +76,16 @@ app.handleSubmit = function() {
 
   console.log('TEST');
 
-  let data = $('#send').find('#message').val();
+  var content = $('#send').find('#message').val();
+
+  let data = {username: 'DanAndRebecca', text: content, roomname: 'awesome room'};
 
   this.send(data);
 
   // also update our own component
   // get data from form
-  const message = $('#message').val();
-  console.log(message);
-  this.renderMessage({username: 'self', message: message, roomname: 'somethingdistinctive'});
-};
 
-app.escapeMessage = function(obj) {
-  let {text, username, roomname} = obj;
-
-  text = escape(text);
-  username = escape(username);
-  roomname = escape(roomname);
-
-  return {text, username, roomname};
+  this.renderMessage(data);
 };
 
 app.postMessages = function(data) {
@@ -84,11 +93,50 @@ app.postMessages = function(data) {
 
   for (let i = 0; i < data.length; i++) {
     const thisMessage = data[i];
-    const safeMessage = app.escapeMessage(thisMessage);
-    app.renderMessage(safeMessage);
+    if (!thisMessage.username || !thisMessage.text || thisMessage.username < 1 || thisMessage.text.length < 1) {
+      continue;
+    } 
+
+    const roomName = thisMessage.roomname;
+
+    if (this.availableRooms.indexOf(roomName) < 0) {
+      this.availableRooms.push(roomName);
+    }
+
+    // if (roomName === this.room) {
+    if (true) {
+      this.renderMessage(thisMessage);
+    } {
+      continue;
+    }
+
+  }
+
+  // populate the aside
+  for (let i = 0; i < this.availableRooms.length; i++) {
+
+    if (this.availableRooms[i].length < 1) {
+      continue;
+    }
+
+    // make a new roomName node
+    $room = $(`<div><button class="${this.availableRooms[i]} roombutton">${this.availableRooms[i]}</button></div>`);
+    // append the node to the aside
+    $('#roomlist').append($room);
   }
 
 };
+
+app.handleRoomNameClick = function(event) {
+  console.log("asdf");
+
+  //identify room name by roomname.text()
+  console.log(event);
+
+};
+
+app.room = 'awesome room';
+app.availableRooms = ['All Rooms'];
 
 $(document).ready(function() {
   app.init();

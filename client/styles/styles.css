@@ -67,6 +67,12 @@ form input[type=text] {
 
 .chat .username {
     font-weight: 800;
+    color: #55667F;
+}
+
+.chat .text {
+    margin: 7px;
+    color: #0C7F57;
 }
 
 .chat:hover {
@@ -86,5 +92,13 @@ form input[type=text] {
 .friend {
     color: #fff;
     background-color: #0090da;
+}
+
+#roomlist {
+    float: left;
+    border: 1px solid black;
+    min-width: 15px;
+    max-width: 150px;
+    padding: 50px 10px;
 }
 
