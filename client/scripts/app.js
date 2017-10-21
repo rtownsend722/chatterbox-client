@@ -1,11 +1,8 @@
-// YOUR CODE HERE:
-
 var app = {};
 
 app.URL = 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages';
 
 app.init = function() {
-  $('#main').find('.username').on('click', this.handleUsernameClick);
   $('#send').find('.submit').on('click', (event) => { 
     this.handleSubmit(); 
   });
@@ -13,9 +10,6 @@ app.init = function() {
   let arrowFunction = (data) => { this.postMessages(data); };
 
   this.fetch(arrowFunction);
-
-
-  console.log('App.init has called!');
 };
 
 app.send = function(message) { 
@@ -29,23 +23,18 @@ app.send = function(message) {
   }); 
 };
 
-
-
 app.fetch = function(cb, data) {
   $.ajax({
     url: this.URL,
     type: 'GET',
-    data: {limit: 9999999},
+    data: {limit: 1000},
     success: function (data) {
-      cb(data);
-      this.feed = data.results;
-      console.log(this.feed);
+      cb(data.results);
     },
     error: function() { console.log('error'); }
   });
 
 };
-
 
 app.clearMessages = function() {
   $('#chats').children().remove();
@@ -54,7 +43,7 @@ app.clearMessages = function() {
 app.renderMessage = function(message) {
   var $message = $(`<div class="chat"></div>`);
   
-  var $username = $(`<span class="username"></span>`);
+  var $username = $(`<a href="#" class="username"></a>`);
   var $text = $(`<span class="text"></span>`);
   var $roomname = $(`<span class="roomname"></span>`);
 
@@ -62,10 +51,14 @@ app.renderMessage = function(message) {
   $text.text(message.text);
   $roomname.text(message.roomname);
 
+  $username.on('click', (event) => {
+    this.handleUsernameClick(event);
+  });
+
   $message.append($username);
   $message.append($text);
   $message.append($roomname);
-
+  
   $('#chats').prepend($message);
 };
 
@@ -79,33 +72,57 @@ app.renderRoom = function(room) {
   $('#roomSelect').append('<div>`${room}`</div>');
 };
 
-app.handleUsernameClick = function() {
+app.handleUsernameClick = function(event) {
+  var friend = event.toElement.innerHTML;
+  if (this.friendlist.indexOf(friend) < 0) {
+    this.friendlist.push(friend);  
+  }
+  
+  app.friend = friend;
 
+  $('#friendlist').html('');
+  for (let i = 0; i < this.friendlist.length; i++) {
+    const thisFriend = $(`<button class="${this.friendlist[i]}">${this.friendlist[i]}</button>`);
+    // event handler
+    thisFriend.on('click', (event) => {
+      this.filterMessages(event);
+    });
+
+    $('#friendlist').append(thisFriend);
+  }
+  
+};
+
+app.filterMessages = function(event) {
+  $('#chats').html('');
+  for (let i = 0; i < this.feed.length; i++) {
+    if (this.feed[i].username === app.friend) {
+      this.renderMessage(this.feed[i]);
+    }
+  }
 };
 
 app.handleSubmit = function() {
   var content = $('#send').find('#message').val();
-  let data = {username: 'DanAndRebecca', text: content, roomname: 'awesome room'};
+  let data = {username: $('#username').val(), text: content, roomname: $('#roomname').val()};
   this.send(data);
   this.renderMessage(data);
 };
 
 app.postMessages = function(data) {
-  data = data.results;
+  
+  this.feed = data;
 
   for (let i = 0; i < data.length; i++) {
     const thisMessage = data[i];
+    const roomName = thisMessage.roomname;
     if (!thisMessage.username || !thisMessage.text || thisMessage.username < 1 || thisMessage.text.length < 1) {
       continue;
     } 
 
-    const roomName = thisMessage.roomname;
-
     if (this.availableRooms.indexOf(roomName) < 0) {
       this.availableRooms.push(roomName);
     }
-
-    // if (roomName === this.room) {
     if (!this.showAll) {
       if (roomName === this.room) {
         this.renderMessage(thisMessage);
@@ -115,61 +132,49 @@ app.postMessages = function(data) {
     } else {
       this.renderMessage(thisMessage);
     }
-
   }
-
-  // populate the aside
+  
+  $('#roomlist').html('');  
+  
   for (let i = 0; i < this.availableRooms.length; i++) {
-
-    // if the (safe) room name has no length, then skip it
     if (this.availableRooms[i] && this.availableRooms[i].length < 1) {
       continue;
     }
-
-    // make a new roomName node
     $room = $(`<div><button class="${this.availableRooms[i]} roombutton">${this.availableRooms[i]}</button></div>`);
-
     $($room).on('click', (event) => { this.handleRoomNameClick(event); });
-
-    // append the node to the aside
     $('#roomlist').append($room);
   }
-
-
+  
 };
 
 app.handleRoomNameClick = function(event) {
-  //identify room name by roomname.text()
   const selectedRoom = event.toElement.innerHTML;
 
-  console.log('handleRoomNameClick invoked', selectedRoom);
+  $('#chats').html('');
 
   if (selectedRoom === 'All Rooms') {
     this.showAll = true;
-    console.log('showing all rooms...');
     this.renderMessages();
     return;
   }
+  $('#roomname').val(selectedRoom);
 
-  // set up the filter
   this.showAll = false;
   this.room = selectedRoom;
-
-  console.log(this.showAll, this.room);
-
-  // re-render the messages
-  this.renderMessages();
-
+  this.postMessages(this.feed);
 };
 
 app.room = 'awesome room';
 app.showAll = true;
 app.availableRooms = ['All Rooms'];
 app.feed = [];
+app.friendlist = [];
 
 $(document).ready(function() {
   app.init();
 });
+
+
 
 
 

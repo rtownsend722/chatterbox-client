@@ -68,6 +68,7 @@ form input[type=text] {
 .chat .username {
     font-weight: 800;
     color: #55667F;
+    text-decoration: none;
 }
 
 .chat .text {
@@ -101,4 +102,16 @@ form input[type=text] {
     max-width: 150px;
     padding: 50px 10px;
 }
+
+#friendlist {
+    float: right;
+    border: 1px solid black;
+    min-width: 15px;
+    max-width: 150px;
+    padding: 50px 10px;
+}
+
+
+
+
 
