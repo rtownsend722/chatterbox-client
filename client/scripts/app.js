@@ -10,6 +10,8 @@ app.init = function() {
   let arrowFunction = (data) => { this.postMessages(data); };
 
   this.fetch(arrowFunction);
+
+  setInterval(function() { app.fetch(arrowFunction); }, 5000);
 };
 
 app.send = function(message) { 
@@ -27,7 +29,7 @@ app.fetch = function(cb, data) {
   $.ajax({
     url: this.URL,
     type: 'GET',
-    data: {limit: 1000},
+    data: {limit: 10000},
     success: function (data) {
       cb(data.results);
     },
